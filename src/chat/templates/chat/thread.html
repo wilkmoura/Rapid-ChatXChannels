@@ -19,8 +19,51 @@
 
 {% block script %}
 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js'></script>
 <script>
 // websocket scripts
+
+// console.log(window.location)
+var loc = window.location
+var formData = $("#form")
+var msgInput = $("#{{form.message.auto_id}}")
+var chatHolder = $("#chat-items")
+
+var wsStart = 'ws://'
+if (loc.protocal === 'https:') {
+    wsStart = 'wss://'
+}
+var endpoint = wsStart + window.location.host + window.location.pathname
+
+var socket = new ReconnectingWebSocket(endpoint)
+
+
+socket.onmessage = function (e) {
+    console.log("message", e)
+    var chatDataMsg = JSON.parse(e.data)
+    chatHolder.append("<li>" + chatDataMsg.username + ": " + chatDataMsg.message + "</li>")
+}
+
+socket.onopen = function (e) {
+    console.log("onopen", e)
+    formData.submit(function(event) {
+        event.preventDefault()
+        var msgText = msgInput.val()
+        // chatHolder.append("<li>" + "{{ user.username }}" + ": " + msgText + "</li>")
+        // var formDataSerialized = formData.serialize()
+        var finalData = {
+            'message': msgText
+        }
+        socket.send(JSON.stringify(finalData))
+        formData[0].reset()
+    })
+} 
+socket.onerror = function (e) {
+    console.log("onerror", e)
+} 
+socket.onclose = function (e) {
+    console.log("onclose", e)
+} 
 
 </script>
 {% endblock %}
